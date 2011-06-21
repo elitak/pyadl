@@ -1,3 +1,6 @@
 [submodule "amd-adl-sdk"]
 	path = amd-adl-sdk
 	url = https://github.com/elitak/amd-adl-sdk.git
+[submodule "amdovdrvctrl"]
+	path = amdovdrvctrl
+	url = git://amdovdrvctrl.git.sourceforge.net/gitroot/amdovdrvctrl/amdovdrvctrl
