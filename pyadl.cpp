@@ -12,64 +12,82 @@ using namespace std;
 
 class Adapter {
 public:
-   Adapter(int iAdapterIndex) : index(iAdapterIndex) {}
+   Adapter(int iAdapterIndex) :
+      index(iAdapterIndex)
+   {
+   }
+
    ADLTemperature* getTemperature(int iThermalControllerIndex) {
+      selectGPU();
       ADLTemperature* lpTemperature = new ADLTemperature();
       ADL::Instance()->ADL_Overdrive5_Temperature_Get(index, iThermalControllerIndex, lpTemperature);
       return lpTemperature;
    }
+   
+   void selectGPU() {
+      ADL::Instance()->SetGPUIndex(&index);
+   }
 
-   list getPerformanceLevels() {
+   ADLODPerformanceLevels* fetchODPerformanceLevels() {
+      selectGPU();
       ADL* adl = ADL::Instance();
-      int features = ADL::FEAT_GET_OD_PARAMETERS | ADL::FEAT_GET_OD_PERF_LEVELS;
+      ADLODParameters* para = fetchODParameters();
 
-      if ((adl->GetSupportedFeatures() & features) != features) {
-         throw runtime_error("features missing from device");
-      }
-
-      ADLODParameters para;
-      if (adl->ADL_Overdrive5_ODParameters_Get(index, &para) != ADL_OK) {
-         throw runtime_error("could not fetch current parameters");
-      }
-
-      int perf_level_size = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * (para.iNumberOfPerformanceLevels - 1);
+      int perf_level_size = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * (para->iNumberOfPerformanceLevels - 1);
       ADLODPerformanceLevels* levels = (ADLODPerformanceLevels*)malloc(perf_level_size);
       levels->iSize = perf_level_size;
+      delete para;
+
       if(adl->ADL_Overdrive5_ODPerformanceLevels_Get(index, 0, levels) != ADL_OK) {
          free(levels);
          throw runtime_error("could not fetch performance levels");
       }
+      return levels;
+   }
+
+   list getPerformanceLevels() {
+      ADLODPerformanceLevels* levels = fetchODPerformanceLevels();
+      ADLODParameters* para = fetchODParameters();
 
       list levelsList;
-      for (int ndx = 0; ndx < para.iNumberOfPerformanceLevels; ndx++) {
+      for (int ndx = 0; ndx < para->iNumberOfPerformanceLevels; ndx++) {
          levelsList.append(levels->aLevels[ndx]);
       }
+      delete para;
+      free(levels);
 
       return levelsList;
    }
 
-   void setPerformanceLevels(object levels) {
+   ADLODParameters* fetchODParameters() {
+      selectGPU();
       ADL* adl = ADL::Instance();
+      ADLODParameters* para = new ADLODParameters();
+
       int features = ADL::FEAT_GET_OD_PARAMETERS | ADL::FEAT_GET_OD_PERF_LEVELS;
 
       if ((adl->GetSupportedFeatures() & features) != features) {
          throw runtime_error("features missing from device");
       }
 
-      ADLODParameters para;
-      if (adl->ADL_Overdrive5_ODParameters_Get(index, &para) != ADL_OK) {
+      if (adl->ADL_Overdrive5_ODParameters_Get(index, para) != ADL_OK) {
          throw runtime_error("could not fetch current parameters");
       }
 
-      int perf_level_size = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * (para.iNumberOfPerformanceLevels - 1);
-      ADLODPerformanceLevels* newLevels = (ADLODPerformanceLevels*) malloc(perf_level_size);
-      newLevels->iSize = perf_level_size;
-      if(adl->ADL_Overdrive5_ODPerformanceLevels_Get(index, 0, newLevels) != ADL_OK) {
-         free(newLevels);
-         throw runtime_error("could not fetch performance levels");
-      }
+      return para;
+   }
 
-      // TODO check that len is correct
+   void setPerformanceLevels(object levels) {
+      ADL* adl = ADL::Instance();
+      ADLODPerformanceLevels* newLevels = fetchODPerformanceLevels();
+      ADLODParameters* para = fetchODParameters();
+
+      if (para->iNumberOfPerformanceLevels != len(levels)) {
+         delete para;
+         throw runtime_error("incorrect number of Performance Levels");
+      }
+      delete para;
+
       for (int ndx = 0; ndx < len(levels); ndx++)
       {
          //adl->ADL_Overdrive5_ODPerformanceLevels_Get(index, newLevels)
@@ -86,7 +104,7 @@ public:
    }
 
 protected:
-   int index;
+   long int index;
 };
  
 BOOST_PYTHON_MODULE(pyadl)
