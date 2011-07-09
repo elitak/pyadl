@@ -21,10 +21,12 @@ def main(argv=None):
       # cardNdx: [EngineClock, MemClock, Vddc]
       # The unit used for clock values here is hundredths of MHz.
       # Zero-values are skipped rather than set.
-      0: [95000,10000,0],
-      4: [92000,10000,0],
-      8: [92000,10000,0],
+      0: [950,100,0],
+      4: [920,100,0],
+      8: [920,100,0],
    }
+   factors = [100, 100, 1000]
+   config = dict( (k, [int(v[i] * factor) for i, factor in enumerate(factors)]) for k, v in config.items() )
 
    pyadl.ADL.Instance()
    raw_input('Look above and ensure you\'re configuring the active cards! Then, press enter.')
