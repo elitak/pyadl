@@ -10,7 +10,10 @@
 * Python 2.7.x
 * libboost_python
 
+## Using
+* see setClocks.py for the simplest use case
+
 ## Donations
 If you like my work and want to support future Bitcoin-related development, please send a donation to:
 
-11Bf2GpP5voSezC1uH5PH4BAp8CxW7BoT
+Bitcoin: 11Bf2GpP5voSezC1uH5PH4BAp8CxW7BoT or PayPal: my-github-username at gmail dot com
