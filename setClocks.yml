@@ -1,10 +1,11 @@
-warn: False
 #DISPLAY: ':0'
+warn: False
+force: True
 clocks:
    # cardNdx: [EngineClock, MemClock, Vddc]
-   # The unit used for clock values here is hundredths of MHz.
-   # Zero-values are skipped rather than set.
-   0: [880,300,1.05]
-   3: [880,300,1.05]
-   4: [750,300,1.05]
-   7: [750,300,1.05]
+   0: [850,825,1.050]
+   3: [850,825,1.050]
+   4: [850,825,1.050]
+   7: [850,825,1.050]
+   8: [950,300,1.175]
+   11: [950,300,1.175]

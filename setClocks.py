@@ -31,7 +31,8 @@ def main(argv=None):
    gpuConfig = dict( (k, [int(v[i] * factor) for i, factor in enumerate(factors)]) for k, v in config['clocks'].items() )
 
    pyadl.ADL.Instance()
-   raw_input('Look above and ensure you\'re configuring the active cards! Then, press enter.')
+   if not config.setdefault('force', False):
+      raw_input('Look above and ensure you\'re configuring the active cards! Then, press enter.')
 
    for gpuNdx, vals in gpuConfig.iteritems():
       adapter = pyadl.Adapter(gpuNdx)
