@@ -28,7 +28,7 @@ def main(argv=None):
    # TODO: detect model name and active adapters; use .yml config
 
    factors = [100, 100, 1000]
-   gpuConfig = dict( (k, [int(v[i] * factor) for i, factor in enumerate(factors)]) for k, v in config['clocks'].items() )
+   gpuConfig = dict( (k, [int(v[i] * factor) for i, factor in enumerate(factors)]) for k, v in config['clocks'].items() ) if 'clocks' in config else {}
 
    pyadl.ADL.Instance()
    if not config.setdefault('force', False):
