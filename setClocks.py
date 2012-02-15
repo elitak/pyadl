@@ -23,30 +23,29 @@ def main(argv=None):
    if config.setdefault('warn', True):
       raw_input(('WARNING: DO NOT run this script without first editing '
                 'the overclocking configuration in "{0}". '
+                'You may disable this message by setting "warn: False" in there. '
                 'Press Ctrl-C to abort, enter to continue.').format(confFile))
 
-   # TODO: detect model name and active adapters; use .yml config
+   # TODO: move this list-building into supporting python code in pyadl
+   active_adapters = [adp for adp in [pyadl.Adapter(ndx) for ndx in range(pyadl.Adapter.getNumberOfAdapters())] if adp.isActive()]
 
    factors = [100, 100, 1000]
    gpuConfig = dict( (k, [int(v[i] * factor) for i, factor in enumerate(factors)]) for k, v in config['clocks'].items() ) if 'clocks' in config else {}
 
-   pyadl.ADL.Instance()
-   if not config.setdefault('force', False):
-      raw_input('Look above and ensure you\'re configuring the active cards! Then, press enter.')
-
-   for gpuNdx, vals in gpuConfig.iteritems():
-      adapter = pyadl.Adapter(gpuNdx)
-      levels = adapter.getPerformanceLevels()
-      [ 
-         setattr(level, key, vals[valNdx])
-            for level in levels
-               for valNdx, key in enumerate([
-                  'iEngineClock',
-                  'iMemoryClock',
-                  'iVddc'
-               ]) if vals[valNdx]
-      ]
-      adapter.setPerformanceLevels(levels)
+   for adapter in active_adapters:
+      for pattern, vals in gpuConfig.iteritems():
+         if re.match(pattern, adapter.getInfo().name):
+            levels = adapter.getPerformanceLevels()
+            [ 
+               setattr(level, key, vals[valNdx])
+                  for level in levels
+                     for valNdx, key in enumerate([
+                        'iEngineClock',
+                        'iMemoryClock',
+                        'iVddc'
+                     ]) if vals[valNdx]
+            ]
+            adapter.setPerformanceLevels(levels)
 
 if __name__ == '__main__':
    sys.exit(main())

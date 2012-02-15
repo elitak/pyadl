@@ -13,7 +13,9 @@ setup(
             'amdovdrvctrl/src/adl.cpp'
          ],
          define_macros = [
-            ('LINUX', 1), #fixes adl_sdk.h
+            ('LINUX', 1), # fixes adl_sdk.h
+            # This doesn't override the unconditional define in amdovdrvctrl/src/adl.h
+            #('INF_LOG(x)', ''), # stops spam to console
          ],
          include_dirs = [
             'amd-adl-sdk/include',
