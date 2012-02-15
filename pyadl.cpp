@@ -17,6 +17,37 @@ public:
    {
    }
 
+   static int getNumberOfAdapters() {
+      int val;
+      ADL::Instance()->ADL_Adapter_NumberOfAdapters_Get(&val);
+      return val;
+   }
+
+   int getID() {
+      selectGPU();
+      int val;
+      ADL::Instance()->ADL_Adapter_ID_Get(index, &val);
+      return val;
+   }
+
+   bool isActive() {
+      selectGPU();
+      int val;
+      ADL::Instance()->ADL_Adapter_Active_Get(index, &val);
+      return (bool) val;
+   }
+
+   AdapterInfo* getInfo() {
+      int size = sizeof(AdapterInfo) * getNumberOfAdapters();
+      LPAdapterInfo infos = (LPAdapterInfo) malloc(size);
+      ADL::Instance()->ADL_Adapter_AdapterInfo_Get(infos, size);
+      selectGPU();
+      AdapterInfo* info = new AdapterInfo();
+      strncpy(info->strAdapterName, infos[index].strAdapterName, ADL_MAX_PATH);
+      free(infos);
+      return info;
+   }
+
    ADLTemperature* getTemperature(int iThermalControllerIndex) {
       selectGPU();
       ADLTemperature* lpTemperature = new ADLTemperature();
@@ -106,9 +137,19 @@ public:
 protected:
    long int index;
 };
+
+struct AdlPath_to_python_str
+{
+   static PyObject* convert(char str[ADL_MAX_PATH]) {
+      return incref(object((char const *) str).ptr());
+   }
+};
+
  
 BOOST_PYTHON_MODULE(pyadl)
 {
+   to_python_converter<char[ADL_MAX_PATH], AdlPath_to_python_str>();
+
    class_<ADLTemperature>("Temperature", init<>())
       .def_readwrite("iSize", &ADLTemperature::iSize)
       .def_readwrite("iTemperature", &ADLTemperature::iTemperature)
@@ -134,7 +175,12 @@ BOOST_PYTHON_MODULE(pyadl)
       .staticmethod("Instance")
       .def("IsATICardAndCatalystPresent", &ADL::IsATICardAndCatalystPresent)
    ;
-   class_<Adapter>("Adapter", init<int>((boost::python::arg("index") = 0), "Select an adapter by supplying and index"))
+   class_<AdapterInfo>("AdapterInfo", init<>())
+      .def_readonly("name", &AdapterInfo::strAdapterName)
+   ;
+   class_<Adapter>("Adapter", init<int>((boost::python::arg("index") = 0), "Select an adapter by supplying its index"))
+      .def("getNumberOfAdapters", &Adapter::getNumberOfAdapters, "Get the total number of available adapters (including inactive ones)")
+      .staticmethod("getNumberOfAdapters")
       .def("getTemperature", &Adapter::getTemperature, return_value_policy<manage_new_object>(), "Get the temperature from a specified thermal controller", (
          boost::python::arg("sensorIndex") = 0
       ))
@@ -142,6 +188,9 @@ BOOST_PYTHON_MODULE(pyadl)
       .def("setPerformanceLevels", &Adapter::setPerformanceLevels, "Set the performance levels", (
          boost::python::arg("levels")
       ))
+      .def("isActive", &Adapter::isActive, "Return a bool indicating activity state")
+      .def("getID", &Adapter::getID, "Fetch the Adapter's ID (1 per physical GPU)")
+      .def("getInfo", &Adapter::getInfo, return_value_policy<manage_new_object>(), "Get the Adapter's Info struct")
    ;
 }
 
