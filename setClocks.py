@@ -9,9 +9,11 @@ import re
 def main(argv=None):
    argv = argv or sys.argv
    progDir = os.path.abspath(os.path.dirname(argv[0]))
-   confFile = re.sub(r'^(.*?)(\.py)?$', r'\1.yml', os.path.basename(argv[0]))
-
-   config = yaml.load(open(os.path.join(progDir, confFile)))
+   if len(argv) > 1:
+      config = yaml.load(open(argv[1]))
+   else:
+      confFile = re.sub(r'^(.*?)(\.py)?$', r'\1.yml', os.path.basename(argv[0]))
+      config = yaml.load(open(os.path.join(progDir, confFile)))
 
    # guess display if not set
    if 'DISPLAY' not in os.environ:
